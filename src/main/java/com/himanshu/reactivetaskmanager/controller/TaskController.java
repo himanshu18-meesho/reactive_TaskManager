@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.time.Duration;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/tasks")
@@ -39,6 +41,20 @@ public class TaskController {
         return service.deleteTask(id)
         .flatMap(task -> Mono.just(ResponseEntity.ok("Task deleted: " + task.getId())))
         .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<Task> streamTasks() {
+        return service.getAllTasks()
+                .collectList()
+                .flatMapMany(tasks -> {
+                    if (tasks.isEmpty()) {
+                        return Flux.interval(Duration.ofSeconds(2))
+                                .map(i -> new Task("dummy", "No tasks available", false));
+                    }
+                    return Flux.interval(Duration.ofSeconds(2))
+                            .map(index -> tasks.get((int)(index % tasks.size())));
+                });
     }
 
     @Data
