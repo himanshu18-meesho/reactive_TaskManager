@@ -27,4 +27,8 @@ public class TaskService {
     public Mono<Task> completeTask(String id) {
         return repo.markCompleted(id);
     }
+
+    public Mono<Task> deleteTask(String id) {
+        return repo.delete(id);
+    }
 }

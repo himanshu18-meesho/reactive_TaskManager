@@ -28,9 +28,17 @@ public class TaskRepository {
     public Mono<Task> markCompleted(String id) {
         Task task = tasks.get(id);
         if (task == null) return Mono.empty();
-        
+
         task.setCompleted(true);
         tasks.put(id, task);
+        return Mono.just(task);
+    }
+
+    public Mono<Task> delete(String id) {
+        Task task = tasks.get(id);  
+        if (task == null) return Mono.empty();
+
+        tasks.remove(id);
         return Mono.just(task);
     }
 }
