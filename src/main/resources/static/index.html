@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        #newTaskInput {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .task {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: white;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .task:hover {
+            transform: translateX(5px);
+        }
+        .task.completed {
+            background-color: #f8f9fa;
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .task button {
+            margin-left: auto;
+            background-color: #27ae60;
+        }
+        .task button:hover {
+            background-color: #219a52;
+        }
+    </style>
+</head>
+<body>
+    <h1>✓ Task Manager</h1>
+    
+    <div class="input-container">
+        <input type="text" id="newTaskInput" placeholder="What needs to be done?">
+        <button onclick="createTask()">Add Task</button>
+    </div>
+
+    <div id="taskList"></div>
+
+    <script>
+        function loadTasks() {
+            fetch('/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const taskList = document.getElementById('taskList');
+                    taskList.innerHTML = '';
+                    tasks.forEach(task => {
+                        const div = document.createElement('div');
+                        div.className = `task ${task.completed ? 'completed' : ''}`;
+                        div.innerHTML = `
+                            ${task.description}
+                            ${!task.completed ? 
+                                `<button onclick="completeTask('${task.id}')">Complete ✓</button>` 
+                                : ''}
+                        `;
+                        taskList.appendChild(div);
+                    });
+                });
+        }
+
+        function createTask() {
+            const input = document.getElementById('newTaskInput');
+            const description = input.value.trim();
+            
+            if (!description) return;
+
+            fetch('/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ description })
+            })
+            .then(() => {
+                input.value = '';
+                loadTasks();
+            });
+        }
+
+        function completeTask(id) {
+            fetch(`/tasks/${id}/complete`, {
+                method: 'PUT'
+            })
+            .then(() => loadTasks());
+        }
+
+        // Load tasks when page loads
+        loadTasks();
+
+        // Add enter key support for creating tasks
+        document.getElementById('newTaskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                createTask();
+            }
+        });
+    </script>
+</body>
+</html>
